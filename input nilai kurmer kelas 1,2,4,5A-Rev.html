@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nilai Sumatif Al-Qur'an Hadis</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      margin: 0;
+    }
+    h2, h3 {
+      text-align: center;
+      margin: 10px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+      overflow-x: auto;
+      display: block;
+    }
+    th, td {
+      border: 1px solid #000;
+      text-align: center;
+      padding: 4px;
+      font-size: 12px;
+    }
+    th {
+      background-color: #d9ead3;
+    }
+    td.nama {
+      text-align: left;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+    td:first-child, th:first-child {
+      width: 40px;
+    }
+    td:nth-child(2), th:nth-child(2) {
+      width: 200px;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 4px;
+      border: none;
+      text-align: center;
+      font-size: 12px;
+    }
+    input[type="text"].nama-input {
+      text-align: left;
+    }
+    button, select {
+      margin: 6px 3px;
+      padding: 8px 10px;
+      font-size: 14px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    button.hapus-nilai {
+      background-color: #e53935;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.hapus-nilai:hover {
+      background-color: #c62828;
+    }
+    #controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    #hasilRataRataKelas {
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 10px;
+        padding: 2px;
+      }
+      input[type="number"], input[type="text"] {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>DAFTAR NILAI SUMATIF AL-QUR'AN HADIS</h2>
+  <h3>SEMESTER : II</h3>
+
+  <div id="controls">
+    <select id="kelasSelect" onchange="gantiKelas()">
+      <option value="5A">Kelas 5A</option>
+      <option value="4A">Kelas 4A</option>
+      <option value="2A">Kelas 2A</option>
+      <option value="1A">Kelas 1A</option>
+    </select>
+
+    <button onclick="exportToExcel()">Export ke Excel</button>
+    <button onclick="hitungSemuaRataRata()">Hitung Rata-rata dan Nilai Raport</button>
+    <button onclick="simpanNilai()">Simpan</button>
+    <button class="hapus-nilai" onclick="hapusSemuaNilai()">Hapus Semua Nilai</button>
+  </div>
+
+  <p id="hasilRataRataKelas"></p>
+
+  <table id="nilaiTable">
+    <thead>
+      <tr>
+        <th rowspan="2">NO</th>
+        <th rowspan="2">NAMA SISWA</th>
+        <th colspan="1">ELEMEN TAJWID</th>
+        <th colspan="2">ELEMEN AL-QUR'AN</th>
+        <th colspan="1">ELEMEN HADITS</th>
+        <th colspan="3">RATA RATA</th>
+        <th rowspan="2">NILAI AKHIR TP</th>
+        <th rowspan="2">SUMATIF SEMESTER</th>
+        <th rowspan="2">NILAI RAPORT</th>
+      </tr>
+      <tr>
+        <th>TP 1</th>
+        <th>TP 1</th>
+        <th>TP 2</th>
+        <th>TP 1</th>
+        <th>TAJWID</th>
+        <th>QUR'AN</th>
+        <th>HADITS</th>
+      </tr>
+    </thead>
+    <tbody id="tbodySiswa"></tbody>
+  </table>
+
+  <script>
+    // Script JavaScript tetap sama seperti sebelumnya
+   const siswaKelas = {
+      "5A": ["Abi Cipta Vernanda", "Achmad Rafli Sakha", "Adila Ibni Muhammad Al Ayyubi", "Airlangga Arkaan Musyaffa", "Akhmad Sokhibul Wafa", "Alya Jazilah", "Alya Samha Saufa", "Arsiki Putra Ryannu", "Atiqoh Khansa Ramadhani", "Attala Noval Adi Pradana", "Bintang Berliana Rosadi", "Cinta Julia Ramadhani", "Diah Ayu Dara Hajatin", "Dini Elvira Oktaviani", "Gallang Hirzy Prayoza", "Hafizh Mizan Kamili", "Ifti Nalita Sahrani", "Ikhfa Nurul Amaliyah"],
+      "4A": ["Absyar Fayaaz Abdillah", "Adzin Majid", "Afiqa Azalia Zahra", "Agam Abdillah", "Ahmad Kenzie Nuril Ilmi", "Aisyah Ayunindia Inara", "Ajeng Novita Wibowo", "Alif Firdhaos Ramadhani", "Alifiandra Yusuf Mahardika", "Alika Naila Putri", "Ana Miladia Rahma", "Angga Juliansyah", "Arsya Nandana Al Fatih", "Arsyila Fitri Azzahira", "Azam Al Ghifari", "Azka Amalina Putri Erdiyanto", "Azka Azfar Effendy", "Azzam Izzul Fahmi", "Bendik Khisbal Aulia", "Daffa Hafiz Arifin", "Dliya'Ulhaq Alfarisi", "Fahri Maulana Khakim", "Faqih Al Athaya", "Farah Aqila Putri"],
+      "2A": ["Abdillah Agam Syah", "Adiba Shakila Atmarini", "Adrian Arsenio Rajendra", "Ainayya Fathiyaturahma", "Anindya Prameswari", "Annasya Syafa'Atunnn Nafeeza", "Annisa Yudia Fara Dhiba", "Aqila Deva Fian Pranaja", "Arfan Naufal Rafassya", "Arzhanka Isra Alrafaeyza", "Asila Mumtazah", "Atha Hafizh Alfarezi Ramadhan", "Atika Rizky Ayudia Syakira", "Ayra Ghaliyah Azzahra", "Danish Yoga Hilmawan", "Ghirniq Yuchanidza El'Yas", "Haidar Gibran Ibnu Hakim", "Haqqul Yaqin", "Husna Kamila Zahsy", "Ibni Rafif", "Ikhfa Najwa Amrina"],
+      "1A": ["Abidanasya Kafa Billah", "Abidzar Gibran Al Gifari", "Adi Ibnu Asy`Ari", "Aghitsna Rogo Pambayun", "Ahmad Kafi Ulum Maulana", "Akbar Zidan Maulana", "Akhlisil Amala Bilqis", "Alea Aqifa Farzana", "Alifa Hibatillah", "Alina Putri Azzahwa", "Alisha Naila Putri", "Almahyra Qirani", "Amanda Rafaina Zhafira", "Arfadhia Ramadhan", "Arkan Athaya Ramadhan", "Aryanti Calya Azzquerra", "Arzachel Rafizqy Ramadan", "Athiyah Syafi'A Lubaba", "Ayra Khandra Zaida", "Azkadina Kanzia Nadhifa", "Azzam Khalif Sanjaya", "A`Dlin", "Bilqis Mafazatina Apriliani", "Danu Danial Dailami", "Defri Nugraha Pratama", "Devika Sarisha Madzuri", "Dilan Fatir Rabbani", "Elvira Septiana", "Fadhil Fathurrohman", "Farel Ramadhan Assyafiq", "Fathan Shobir Arrahman", "Humaera Rihadatul Aisya", "Ibnu Ali", "Ibnu Dwi Arsya Putra", "Ihda Ni Ami", "Inna Fitriyana Putri"]
+    };
+
+    function gantiKelas() {
+      const kelas = document.getElementById("kelasSelect").value;
+      const tbody = document.getElementById("tbodySiswa");
+      tbody.innerHTML = "";
+
+      siswaKelas[kelas].forEach((nama, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td class="nama">${nama}</td>
+          <td><input type="number"></td>
+          <td><input type="number"></td>
+          <td><input type="number"></td>
+          <td><input type="number"></td>
+          <td><input type="number" readonly></td>
+          <td><input type="number" readonly></td>
+          <td><input type="number" readonly></td>
+          <td><input type="number" readonly></td>
+          <td><input type="number"></td>
+          <td><input type="number" readonly></td>
+        `;
+        tbody.appendChild(row);
+
+        // Load data tersimpan
+        const dataTersimpan = JSON.parse(localStorage.getItem("nilai_" + kelas));
+        if (dataTersimpan && dataTersimpan[index]) {
+          const inputs = row.querySelectorAll("input");
+          const saved = dataTersimpan[index];
+          inputs[0].value = saved.tajwid || "";
+          inputs[1].value = saved.quran1 || "";
+          inputs[2].value = saved.quran2 || "";
+          inputs[3].value = saved.hadits || "";
+          inputs[4].value = saved.rataTajwid || "";
+          inputs[5].value = saved.rataQuran || "";
+          inputs[6].value = saved.rataHadits || "";
+          inputs[7].value = saved.nilaiAkhir || "";
+          inputs[8].value = saved.sumatif || "";
+          inputs[9].value = saved.nilaiRaport || "";
+        }
+      });
+    }
+
+    function hitungSemuaRataRata() {
+      const rows = document.querySelectorAll("#nilaiTable tbody tr");
+      let totalRata = 0;
+      let jumlahSiswa = 0;
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const tajwid = parseFloat(inputs[0].value);
+        const quran1 = parseFloat(inputs[1].value);
+        const quran2 = parseFloat(inputs[2].value);
+        const hadits = parseFloat(inputs[3].value);
+
+        const rataTajwid = isNaN(tajwid) ? 0 : tajwid;
+        const rataQuran = isNaN(quran1) || isNaN(quran2) ? 0 : ((quran1 + quran2) / 2).toFixed(2);
+        const rataHadits = isNaN(hadits) ? 0 : hadits;
+
+        const nilaiAkhir = ((parseFloat(rataTajwid) + parseFloat(rataQuran) + parseFloat(rataHadits)) / 3).toFixed(2);
+        const sumatif = nilaiAkhir;
+        const nilaiRaport = Math.round(nilaiAkhir);
+
+        inputs[4].value = rataTajwid;
+        inputs[5].value = rataQuran;
+        inputs[6].value = rataHadits;
+        inputs[7].value = nilaiAkhir;
+        inputs[9].value = nilaiRaport;
+
+        if (!isNaN(nilaiAkhir)) {
+          totalRata += parseFloat(nilaiAkhir);
+          jumlahSiswa++;
+        }
+      });
+
+      const hasil = document.getElementById("hasilRataRataKelas");
+      hasil.innerText = jumlahSiswa > 0 ? `Rata-rata kelas: ${(totalRata / jumlahSiswa).toFixed(2)}` : "Belum ada nilai.";
+    }
+
+    function exportToExcel() {
+  const kelas = document.getElementById("kelasSelect").value;
+  const rows = document.querySelectorAll("#nilaiTable tbody tr");
+  const clonedTable = document.createElement("table");
+
+  // Salin header
+  const thead = document.querySelector("#nilaiTable thead").cloneNode(true);
+  clonedTable.appendChild(thead);
+
+  // Salin isi data input
+  const tbody = document.createElement("tbody");
+  rows.forEach(row => {
+    const newRow = document.createElement("tr");
+    const cells = row.querySelectorAll("td");
+
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const newCell = document.createElement("td");
+
+      if (i === 0 || i === 1) {
+        newCell.textContent = cell.textContent;
+      } else {
+        const input = cell.querySelector("input");
+        newCell.textContent = input ? input.value : "";
+      }
+
+      newRow.appendChild(newCell);
+    }
+
+    tbody.appendChild(newRow);
+  });
+
+  clonedTable.appendChild(tbody);
+
+  // Convert dan simpan file Excel
+  const workbook = XLSX.utils.table_to_book(clonedTable, { sheet: "Nilai Siswa" });
+  const fileName = `Nilai_Siswa_Kelas_${kelas}.xlsx`;
+  XLSX.writeFile(workbook, fileName);
+}
+
+
+function hapusSemuaNilai() {
+  const konfirmasi = confirm("Apakah Anda yakin ingin menghapus semua nilai?");
+  if (!konfirmasi) return;
+
+  const inputs = document.querySelectorAll("#nilaiTable tbody input");
+  inputs.forEach(input => {
+    if (!input.readOnly) {
+      input.value = "";
+    }
+  });
+
+  // Juga hapus hasil perhitungan (kolom readonly)
+  const readonlyInputs = document.querySelectorAll("#nilaiTable tbody input[readonly]");
+  readonlyInputs.forEach(input => input.value = "");
+
+  // Kosongkan info rata-rata kelas jika ada
+  const hasil = document.getElementById("hasilRataRataKelas");
+  if (hasil) hasil.innerText = "";
+}
+
+
+    function simpanNilai() {
+      const kelas = document.getElementById("kelasSelect").value;
+      const rows = document.querySelectorAll("#nilaiTable tbody tr");
+      const data = [];
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const nama = row.querySelector(".nama").innerText;
+
+        data.push({
+          nama,
+          tajwid: inputs[0].value,
+          quran1: inputs[1].value,
+          quran2: inputs[2].value,
+          hadits: inputs[3].value,
+          rataTajwid: inputs[4].value,
+          rataQuran: inputs[5].value,
+          rataHadits: inputs[6].value,
+          nilaiAkhir: inputs[7].value,
+          sumatif: inputs[8].value,
+          nilaiRaport: inputs[9].value,
+        });
+      });
+
+      localStorage.setItem("nilai_" + kelas, JSON.stringify(data));
+      alert("Data nilai kelas " + kelas + " berhasil disimpan!");
+    }
+
+    window.onload = gantiKelas;
+    // (gantiKelas, hitungSemuaRataRata, exportToExcel, simpanNilai, hapusSemuaNilai)
+  </script>
+</body>
+</html>
