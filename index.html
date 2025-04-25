@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silsilah Keluarga</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+		<div class="container">
+	    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h1>Silsilah Keluarga Bani Achmad Zabidi</h1>
+        <button onclick="window.location.href='tambah_anggota.html'" class="button">Tambah Anggota</button>
+		</div>
+
+		<div class="d-flex justify-content-end mb-3">
+            <button id="checkRelationBtn" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#relationModal">Cek Hubungan Kekerabatan</button>
+        </div>
+
+
+        <table id="family-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nama</th>
+                    <th>Gender</th>
+                    <th>Tanggal Lahir</th>
+                    <th>Usia</th>
+					<th>Nama Ayah</th>
+                    <th>Nama Ibu</th>
+                    <th>Nama Pasangan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="familyTableBody">
+        <!-- Data anggota akan dimuat di sini -->
+        
+</tbody>
+        </table>
+    </div>
+	
+	
+	
+	
+	<!-- Modal Cek Hubungan Kekerabatan -->
+    <div class="modal fade" id="relationModal" tabindex="-1" aria-labelledby="relationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="relationModalLabel">Cek Hubungan Kekerabatan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="relationForm">
+                        <div class="mb-3">
+                            <label for="firstMember" class="form-label">Anggota Keluarga Pertama</label>
+                            <select id="firstMember" class="form-select" required>
+                                <option value="">Pilih anggota keluarga</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="secondMember" class="form-label">Anggota Keluarga Kedua</label>
+                            <select id="secondMember" class="form-select" required>
+                                <option value="">Pilih anggota keluarga</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" id="checkRelation" class="btn btn-primary w-100">Cek Hubungan</button>
+                        </div>
+                    </form>
+                    <div id="relationResult" class="alert alert-info d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const familyTableBody = document.getElementById("familyTableBody");
+        const firstMemberSelect = document.getElementById("firstMember");
+        const secondMemberSelect = document.getElementById("secondMember");
+        const checkRelationButton = document.getElementById("checkRelation");
+        const relationResult = document.getElementById("relationResult");
+
+        // Fetch family data
+        fetch("http://localhost/Silsilah-Keluarga-Bani-Achmad-Zabidi/backend/anggota_api.php?action=get_all")
+            .then(response => response.json())
+            .then(data => {
+			 console.log("Data dari API:", data); // Tambahkan log ini
+			
+			
+
+                // Populate table
+                familyTableBody.innerHTML = "";
+                data.forEach(member => {
+                    const row = document.createElement("tr");
+            //         row.innerHTML = `
+            //            <td><img src="assets/img/${member.foto || 'default.jpg'}" alt="${member.nama}" width="50"></td>
+            //            <td>${member.nama}</td>
+            //            <td>${member.gender}</td>
+            //            <td>${member.tanggal_lahir}</td>
+            //            <td>${member.usia}</td>
+            //            <td>${member.nama_ayah || '-'}</td>
+            //            <td>${member.nama_ibu || '-'}</td>
+            //            <td>${member.nama_pasangan || '-'}</td>
+            //            <td>
+            //                <button class="btn btn-sm btn-warning edit-btn" data-id="${member.id}" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>
+            //                <button class="btn btn-sm btn-danger">Hapus</button>
+            //            </td>
+            //        `;
+                    
+familyTableBody.appendChild(row);
+
+                    // Populate dropdown
+                    const option = document.createElement("option");
+                  //  option.value = member.id;
+					option.value = member.id_anggota;
+                    option.textContent = member.nama;
+					console.log("Menambahkan opsi dropdown:", option);
+
+                    firstMemberSelect.appendChild(option.cloneNode(true));
+                    secondMemberSelect.appendChild(option.cloneNode(true));
+                });
+
+                // Add event listeners to Edit buttons
+                document.querySelectorAll(".edit-btn").forEach(button => {
+                    button.addEventListener("click", (e) => {
+                        const memberId = e.target.dataset.id;
+                        // Fetch data for the selected member and populate modal
+                        const memberData = data.find(member => member.id === memberId);
+                        if (memberData) {
+                            // Populate modal fields with member data
+                            document.getElementById("editName").value = memberData.nama;
+                            document.getElementById("editGender").value = memberData.gender;
+                            document.getElementById("editDOB").value = memberData.tanggal_lahir;
+                            // Add more fields as necessary
+                        }
+                    });
+                });
+
+                // Cek hubungan
+checkRelationButton.addEventListener("click", () => {
+    const firstMemberId = firstMemberSelect.value; // ID anggota pertama
+    const secondMemberId = secondMemberSelect.value; // ID anggota kedua
+
+    // Log ID yang dipilih dari dropdown
+    console.log("First Member ID:", firstMemberId);
+    console.log("Second Member ID:", secondMemberId);
+
+    // Validasi jika dropdown belum dipilih
+    if (!firstMemberId || !secondMemberId) {
+        relationResult.textContent = "Silakan pilih kedua anggota keluarga.";
+        relationResult.classList.remove("d-none");
+        return;
+    }
+
+    // Cari data anggota berdasarkan ID
+    const firstMember = data.find(member => member.id_anggota == firstMemberId);
+    const secondMember = data.find(member => member.id_anggota == secondMemberId);
+
+    // Log data anggota yang ditemukan
+    console.log("First Member Data:", firstMember);
+    console.log("Second Member Data:", secondMember);
+	
+ 
+    if (firstMember && secondMember) {
+    let relationship = "Hubungan tidak ditemukan."; // Default hasil
+
+    // Logika hubungan
+    if (secondMember.id_ayah == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Ayah dari ${secondMember.nama}`;
+    } else if (secondMember.id_ibu == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Ibu dari ${secondMember.nama}`;
+    } else if (firstMember.id_ayah == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Anak dari ${secondMember.nama}`;
+    } else if (firstMember.id_ibu == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Anak dari ${secondMember.nama}`;
+    } else if (firstMember.id_pasangan == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Pasangan dari ${secondMember.nama}`;
+    } 
+    // Hubungan Kakek/Nenek
+    else if (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah)?.id_ayah == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Kakek dari ${secondMember.nama}`;
+    } else if (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah)?.id_ibu == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Nenek dari ${secondMember.nama}`;
+    } 
+	    else if (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu)?.id_ayah == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Kakek dari ${secondMember.nama}`;
+    } else if (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu)?.id_ibu == firstMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Nenek dari ${secondMember.nama}`;
+    }
+	
+	// Hubungan Cucu
+    else if (firstMember.id_ayah && data.find(member => member.id_anggota == firstMember.id_ayah)?.id_ayah == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Cucu dari ${secondMember.nama}`;
+    } else if (firstMember.id_ayah && data.find(member => member.id_anggota == firstMember.id_ayah)?.id_ibu == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Cucu dari ${secondMember.nama}`;
+    } 
+	else if (firstMember.id_ibu && data.find(member => member.id_anggota == firstMember.id_ibu)?.id_ayah == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Cucu dari ${secondMember.nama}`;
+    } else if (firstMember.id_ibu && data.find(member => member.id_anggota == firstMember.id_ibu)?.id_ibu == secondMember.id_anggota) {
+        relationship = `${firstMember.nama} adalah Cucu dari ${secondMember.nama}`;
+    } 	
+	
+	 // Hubungan Menantu
+    else if (firstMember.id_pasangan && (data.find(member => member.id_anggota == firstMember.id_pasangan)?.id_ayah == secondMember.id_anggota || data.find(member => member.id_anggota == firstMember.id_pasangan)?.id_ibu == secondMember.id_anggota)) {
+        relationship = `${firstMember.nama} adalah Menantu dari ${secondMember.nama}`;
+	}	
+	
+	// Hubungan Mertua
+   else if (secondMember.id_pasangan && (data.find(member => member.id_anggota == secondMember.id_pasangan)?.id_ayah == firstMember.id_anggota || data.find(member => member.id_anggota == secondMember.id_pasangan)?.id_ibu == firstMember.id_anggota)) {
+        relationship = `${firstMember.nama} adalah Mertua dari ${secondMember.nama}`;
+	}
+		
+		
+	
+    // Logika Kakak
+    else if ((firstMember.id_ayah == secondMember.id_ayah || firstMember.id_ibu == secondMember.id_ibu) && // Saudara kandung
+        parseInt(firstMember.usia) > parseInt(secondMember.usia)) { // Usia lebih tua
+     
+        relationship = `${firstMember.nama} adalah Kakak dari ${secondMember.nama}`;
+    }
+    // Logika Adik
+    else if (
+        (firstMember.id_ayah == secondMember.id_ayah || firstMember.id_ibu == secondMember.id_ibu) && // Saudara kandung
+        parseInt(firstMember.usia) < parseInt(secondMember.usia) // Usia lebih muda
+    ) {
+        relationship = `${firstMember.nama} adalah Adik dari ${secondMember.nama}`;
+    }
+    // Logika Om/Paman
+    else if (
+        (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah && member.gender == "Laki-Laki" && parseInt(member.usia) < parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) || // Adik laki-laki dari ayah
+        (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu && member.gender == "Laki-Laki" && parseInt(member.usia) < parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) // Adik laki-laki dari ibu
+    ) {
+        relationship = `${firstMember.nama} adalah Om/Paman dari ${secondMember.nama}`;
+    }
+    // Logika Bulik
+    else if (
+        (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah && member.gender == "Perempuan" && parseInt(member.usia) < parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) || // Adik perempuan dari ayah
+        (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu && member.gender == "Perempuan" && parseInt(member.usia) < parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) // Adik perempuan dari ibu
+    ) {
+        relationship = `${firstMember.nama} adalah Bulik dari ${secondMember.nama}`;
+    }
+    // Logika Pakde
+    else if (
+        (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah && member.gender == "Laki-Laki" && parseInt(member.usia) > parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) || // Kakak laki-laki dari ayah
+        (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu && member.gender == "Laki-Laki" && parseInt(member.usia) > parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) // Kakak laki-laki dari ibu
+    ) {
+        relationship = `${firstMember.nama} adalah Pakde dari ${secondMember.nama}`;
+    }
+    // Logika Budhe
+    else if (
+        (secondMember.id_ayah && data.find(member => member.id_anggota == secondMember.id_ayah && member.gender == "Perempuan" && parseInt(member.usia) > parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) || // Kakak perempuan dari ayah
+        (secondMember.id_ibu && data.find(member => member.id_anggota == secondMember.id_ibu && member.gender == "Perempuan" && parseInt(member.usia) > parseInt(secondMember.usia))?.id_anggota == firstMember.id_anggota) // Kakak perempuan dari ibu
+    ) {
+        relationship = `${firstMember.nama} adalah Budhe dari ${secondMember.nama}`;
+    }
+
+   
+		
+		
+		
+		
+    // Hubungan Keponakan
+	else if (
+    // Cek apakah secondMember adalah saudara dari ayah firstMember
+    (firstMember.id_ayah && data.find(member =>
+        member.id_anggota == firstMember.id_ayah && // Cari ayah firstMember
+        member.id_ayah == secondMember.id_ayah && // Ayah dan secondMember harus saudara kandung
+        member.id_ibu == secondMember.id_ibu && // Ibu dan secondMember harus saudara kandung
+        member.id_anggota != secondMember.id_anggota // Bukan dirinya sendiri
+    )) ||
+    // Cek apakah secondMember adalah saudara dari ibu firstMember
+    (firstMember.id_ibu && data.find(member =>
+        member.id_anggota == firstMember.id_ibu && // Cari ibu firstMember
+        member.id_ayah == secondMember.id_ayah && // Ayah dan secondMember harus saudara kandung
+        member.id_ibu == secondMember.id_ibu && // Ibu dan secondMember harus saudara kandung
+        member.id_anggota != secondMember.id_anggota // Bukan dirinya sendiri
+    ))
+) {
+    if (firstMember.gender == "Laki-Laki") {
+        relationship = `${firstMember.nama} adalah Keponakan laki-laki dari ${secondMember.nama}`;
+    } else if (firstMember.gender == "Perempuan") {
+        relationship = `${firstMember.nama} adalah Keponakan perempuan dari ${secondMember.nama}`;
+    }
+}
+    
+	
+	// Hubungan Paman/Bibi
+	else if (
+    // Cek apakah firstMember adalah saudara dari ayah secondMember
+    (secondMember.id_ayah && data.find(member =>
+        member.id_anggota == secondMember.id_ayah && // Cari ayah secondMember
+        member.id_ayah == firstMember.id_ayah && // Ayah dan firstMember harus saudara kandung
+        member.id_ibu == firstMember.id_ibu && // Ibu dan firstMember harus saudara kandung
+        member.id_anggota != firstMember.id_anggota // Bukan dirinya sendiri
+    )) ||
+    // Cek apakah firstMember adalah saudara dari ibu secondMember
+    (secondMember.id_ibu && data.find(member =>
+        member.id_anggota == secondMember.id_ibu && // Cari ibu secondMember
+        member.id_ayah == firstMember.id_ayah && // Ayah dan firstMember harus saudara kandung
+        member.id_ibu == firstMember.id_ibu && // Ibu dan firstMember harus saudara kandung
+        member.id_anggota != firstMember.id_anggota // Bukan dirinya sendiri
+    ))
+) {
+    if (firstMember.gender == "Laki-Laki") {
+        relationship = `${firstMember.nama} adalah Paman dari ${secondMember.nama}`;
+    } else if (firstMember.gender == "Perempuan") {
+        relationship = `${firstMember.nama} adalah Bibi dari ${secondMember.nama}`;
+    }
+}
+	
+	
+	
+//) {
+//    if (firstMember.gender == "Laki-Laki") && 
+//	parseInt(firstMember.usia) > data.find(member => member.id_anggota == secondMember.id_ayah)?.usia){
+ //       relationship = `${firstMember.nama} adalah Pakde dari ${secondMember.nama}`;
+ //   } else if (firstMember.gender == "Perempuan") && 
+//	parseInt(firstMember.usia) > data.find(member => member.id_anggota == secondMember.id_ayah)?.usia){{
+//        relationship = `${firstMember.nama} adalah Budhe dari ${secondMember.nama}`;
+//    }
+//}	
+	
+    
+	
+	
+	
+
+
+    // Cari semua kakak ayah atau ibu
+    const olderSiblings = data.filter(member =>
+        (member.id_ayah == firstMember.id_ayah || member.id_ibu == firstMember.id_ibu) && // Saudara ayah/ibu
+        member.usia > firstMember.usia // Usia lebih tua
+    );
+
+    // Cari semua adik ayah atau ibu
+    const youngerSiblings = data.filter(member =>
+        (member.id_ayah == firstMember.id_ayah || member.id_ibu == firstMember.id_ibu) && // Saudara ayah/ibu
+        member.usia < firstMember.usia // Usia lebih muda
+    );
+
+    // Cari anak dari kakak (kakak sepupu)
+    const olderCousins = [];
+    olderSiblings.forEach(sibling => {
+        const children = data.filter(member => member.id_ayah == sibling.id_anggota || member.id_ibu == sibling.id_anggota);
+        olderCousins.push(...children);
+    });
+
+    // Cari anak dari adik (adik sepupu)
+    const youngerCousins = [];
+    youngerSiblings.forEach(sibling => {
+        const children = data.filter(member => member.id_ayah == sibling.id_anggota || member.id_ibu == sibling.id_anggota);
+        youngerCousins.push(...children);
+    });
+
+    // Tentukan hubungan
+    if (olderCousins.some(cousin => cousin.id_anggota == secondMember.id_anggota)) {
+        relationship = `${secondMember.nama} adalah Kakak Sepupu dari ${firstMember.nama}`;
+    } else if (youngerCousins.some(cousin => cousin.id_anggota == secondMember.id_anggota)) {
+        relationship = `${secondMember.nama} adalah Adik Sepupu dari ${firstMember.nama}`;
+    }
+
+  	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	// Hubungan Ipar
+    else if (firstMember.id_pasangan && data.find(member => member.id_anggota == firstMember.id_pasangan)?.id_ayah == secondMember.id_ayah) {
+        relationship = `${firstMember.nama} adalah Ipar dari ${secondMember.nama}`;
+    } else if (firstMember.id_pasangan && data.find(member => member.id_anggota == firstMember.id_pasangan)?.id_ibu == secondMember.id_ibu) {
+        relationship = `${firstMember.nama} adalah Ipar dari ${secondMember.nama}`;
+    }
+
+    // Log hasil hubungan
+    console.log("Hasil Hubungan:", relationship);
+
+    // Tampilkan hasil hubungan
+    relationResult.textContent = relationship;
+    relationResult.classList.remove("d-none");
+} else {
+    // Jika anggota tidak ditemukan
+    console.error("Data anggota keluarga tidak valid:", firstMemberId, secondMemberId);
+    relationResult.textContent = "Data anggota keluarga tidak valid.";
+    relationResult.classList.remove("d-none");
+}
+});
+            })
+            .catch(error => console.error("Error fetching family data:", error));
+    });
+</script>
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/script.js"></script>
+</body>
+</html>
+
+
+
+
+    <style>
+        /* Tambahkan gaya untuk membuat header tabel sticky */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2; /* Pastikan header berada di atas elemen lain */
+            background-color: #f1f1f1; /* Warna latar belakang header */
+            text-align: center;
+            padding: 10px;
+			
+	    }
+        tbody td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        table {
+            max-height: 400px; /* Batas tinggi untuk scroll */
+            overflow-y: auto;
+            display: block; /* Pastikan tabel bisa digulir */
+        }
+ 
+         /* Tambahan gaya untuk tombol */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+ 
+
+      
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
